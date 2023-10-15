@@ -1,0 +1,139 @@
+<!DOCTYPE html>
+<html>
+<head>
+    <title>Video Player</title>
+    <!-- Include Plyr.js CSS -->
+    <link rel="stylesheet" href="https://cdn.plyr.io/3.6.4/plyr.css">
+    <!-- Include Video.js CSS -->
+    <link href="https://vjs.zencdn.net/7.15.4/video-js.css" rel="stylesheet" />
+</head>
+<style>
+        /* Style for the video input and button */
+        label {
+            font-weight: bold;
+        }
+
+        input[type="text"] {
+            padding: 5px;
+            border: 1px solid #ccc;
+            border-radius: 3px;
+            width: 300px;
+        }
+
+        button {
+            background-color: #007bff;
+            color: #fff;
+            border: none;
+            padding: 5px 10px;
+            border-radius: 3px;
+            cursor: pointer;
+        }
+
+        button:hover {
+            background-color: #0056b3;
+        }
+
+        /* Style for the video container */
+        #video-container {
+            margin-top: 20px;
+        }
+
+        h1 {
+            font-size: 36px;
+            text-transform: uppercase;
+            letter-spacing: 2px;
+            color: #333;
+            text-shadow: 2px 2px 2px rgba(0, 0, 0, 0.5);
+        }
+
+        /* Add more styles here as needed */
+    </style>
+
+<body>
+    <h1>Video Player Stream</h1>
+    
+    <label for="video-url">Enter Video URL:</label>
+    <input type="text" id="video-url">
+    <button onclick="playVideo()">Play</button>
+
+    <!-- Default HTML5 Video Player -->
+    <div id="default-player" style="display:none;">
+        <video id="video-default" controls></video>
+    </div>
+
+    <!-- Plyr.js Video Player -->
+    <div id="plyr-player" style="display:none;">
+        <video id="video-plyr" controls></video>
+    </div>
+
+    <!-- Video.js Video Player -->
+    <div id="videojs-player" style="display:none;">
+        <video id="video-videojs" class="video-js" controls></video>
+    </div>
+
+    <script src="https://cdn.plyr.io/3.6.4/plyr.js"></script>
+    <script src="https://vjs.zencdn.net/7.15.4/video.js"></script>
+    
+    <script>
+        function playVideo() {
+            const videoUrl = document.getElementById('video-url').value;
+            
+            // Hide all video containers
+            document.getElementById('default-player').style.display = 'none';
+            document.getElementById('plyr-player').style.display = 'none';
+            document.getElementById('videojs-player').style.display = 'none';
+
+            // Determine the file extension to choose the appropriate player
+            if (videoUrl.endsWith('.mpd')) {
+                // Prompt for key and keyid for mpd video
+                const keyid = prompt('Enter Key ID:');
+                const key = prompt('Enter Key:');
+
+                if (keyid && key) {
+                    // Use Video.js player for mpd video with quality settings
+                    document.getElementById('videojs-player').style.display = 'block';
+                    const video = videojs('video-videojs', {
+                        html5: {
+                            hls: {
+                                withCredentials: true,
+                                overrideNative: true,
+                            },
+                            dash: {
+                                withCredentials: true,
+                                overrideNative: true,
+                                keySystem: {
+                                    'com.widevine.alpha': {
+                                        licenseUrl: 'YOUR_WIDEVINE_LICENSE_URL',
+                                        certificateUri: 'YOUR_CERTIFICATE_URI'
+                                    }
+                                }
+                            }
+                        },
+                        sources: [{
+                            src: `${videoUrl}?keyid=${keyid}&k=${key}`,
+                            type: 'application/dash+xml',
+                        }],
+                    });
+
+                    // Add quality settings button to the player
+                    video.play();
+                } else {
+                    alert('Key and Key ID are required for mpd video.');
+                }
+            } else {
+                // Use Plyr.js player for other video formats
+                document.getElementById('plyr-player').style.display = 'block';
+                const player = new Plyr('#video-plyr');
+                player.source = {
+                    type: 'video',
+                    sources: [{
+                        src: videoUrl,
+                        type: 'video/mp4',
+                    }],
+                };
+                player.play();
+            }
+        }
+    </script>
+</body>
+</html>
